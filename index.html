@@ -1,0 +1,487 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Stock Market Padam — Learn. Verify. Paper Trade.</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#0A0E1A;
+    --surface:#121726;
+    --surface-2:#161d30;
+    --border:#232B3D;
+    --text:#E8ECF4;
+    --muted:#8792A8;
+    --gain:#2DD4A7;
+    --loss:#FF6B6B;
+    --gold:#F5B942;
+  }
+  *{box-sizing:border-box; margin:0; padding:0;}
+  html{scroll-behavior:smooth;}
+  body{
+    background:var(--bg);
+    color:var(--text);
+    font-family:'Inter', sans-serif;
+    line-height:1.5;
+    -webkit-font-smoothing:antialiased;
+  }
+  h1,h2,h3{ font-family:'Space Grotesk', sans-serif; letter-spacing:-0.01em; }
+  a{ color:inherit; text-decoration:none; }
+  .mono{ font-family:'IBM Plex Mono', monospace; }
+
+  /* ---- Ticker ---- */
+  .ticker-wrap{
+    background:#000;
+    border-bottom:1px solid var(--border);
+    overflow:hidden;
+    white-space:nowrap;
+    padding:9px 0;
+    position:sticky; top:0; z-index:50;
+  }
+  .ticker{
+    display:inline-block;
+    padding-left:100%;
+    animation:scroll-left 32s linear infinite;
+    font-family:'IBM Plex Mono', monospace;
+    font-size:12.5px;
+    letter-spacing:0.02em;
+  }
+  .ticker span{ margin-right:36px; color:var(--muted); }
+  .ticker span.up{ color:var(--gain); }
+  .ticker span.down{ color:var(--loss); }
+  @keyframes scroll-left{
+    0%{ transform:translateX(0); }
+    100%{ transform:translateX(-100%); }
+  }
+  @media (prefers-reduced-motion: reduce){
+    .ticker{ animation:none; padding-left:16px; }
+  }
+
+  /* ---- Header ---- */
+  header{
+    max-width:1040px;
+    margin:0 auto;
+    padding:64px 24px 40px;
+  }
+  .eyebrow{
+    display:inline-flex; align-items:center; gap:8px;
+    font-family:'IBM Plex Mono', monospace;
+    font-size:12px;
+    color:var(--gold);
+    letter-spacing:0.08em;
+    text-transform:uppercase;
+    margin-bottom:18px;
+  }
+  .eyebrow::before{
+    content:"●"; color:var(--gain); font-size:10px;
+  }
+  h1{
+    font-size:clamp(32px, 5.5vw, 52px);
+    font-weight:700;
+    line-height:1.08;
+    max-width:14ch;
+  }
+  h1 em{ font-style:normal; color:var(--gain); }
+  .subtitle{
+    margin-top:20px;
+    max-width:56ch;
+    color:var(--muted);
+    font-size:16.5px;
+  }
+  .subtitle b{ color:var(--text); font-weight:600; }
+
+  .disclaimer-strip{
+    margin-top:28px;
+    display:flex; gap:10px; align-items:flex-start;
+    background:var(--surface);
+    border:1px solid var(--border);
+    border-left:3px solid var(--gold);
+    border-radius:6px;
+    padding:14px 16px;
+    max-width:640px;
+    font-size:13.5px;
+    color:var(--muted);
+  }
+  .disclaimer-strip strong{ color:var(--gold); }
+
+  /* ---- Section shell ---- */
+  section{
+    max-width:1040px;
+    margin:0 auto;
+    padding:56px 24px;
+    border-top:1px solid var(--border);
+  }
+  .section-head{
+    display:flex; justify-content:space-between; align-items:flex-end;
+    gap:20px; margin-bottom:28px; flex-wrap:wrap;
+  }
+  .section-head h2{ font-size:24px; }
+  .section-head .num{
+    font-family:'IBM Plex Mono', monospace;
+    font-size:12px; color:var(--muted);
+  }
+  .section-desc{ color:var(--muted); font-size:14.5px; max-width:60ch; margin-top:6px; }
+
+  /* ---- Category cards (official sites) ---- */
+  .grid{
+    display:grid;
+    grid-template-columns:repeat(auto-fill, minmax(230px, 1fr));
+    gap:14px;
+  }
+  .card{
+    display:block;
+    background:var(--surface);
+    border:1px solid var(--border);
+    border-radius:10px;
+    padding:18px;
+    transition:border-color .15s ease, transform .15s ease, background .15s ease;
+    cursor:pointer;
+  }
+  .card:hover, .card:focus-visible{
+    border-color:var(--gain);
+    background:var(--surface-2);
+    transform:translateY(-2px);
+    outline:none;
+  }
+  .card-top{ display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:14px;}
+  .badge{
+    font-family:'IBM Plex Mono', monospace;
+    font-size:10.5px;
+    padding:3px 8px;
+    border-radius:20px;
+    border:1px solid var(--border);
+    color:var(--muted);
+  }
+  .badge.official{ color:var(--gold); border-color:rgba(245,185,66,0.35); }
+  .card h3{ font-size:16.5px; font-weight:600; margin-bottom:6px; }
+  .card p{ font-size:13px; color:var(--muted); }
+  .card .go{
+    margin-top:14px; font-family:'IBM Plex Mono', monospace;
+    font-size:12px; color:var(--gain); display:flex; align-items:center; gap:5px;
+  }
+
+  /* ---- YouTube list ---- */
+  .yt-list{ display:flex; flex-direction:column; gap:10px; }
+  .yt-row{
+    display:flex; align-items:center; gap:16px;
+    background:var(--surface);
+    border:1px solid var(--border);
+    border-radius:10px;
+    padding:16px 18px;
+    transition:border-color .15s ease, background .15s ease;
+  }
+  .yt-row:hover{ border-color:var(--gain); background:var(--surface-2); }
+  .yt-mark{
+    width:38px; height:38px; flex:none;
+    border-radius:8px;
+    background:linear-gradient(135deg, var(--gain), #1AA789);
+    display:flex; align-items:center; justify-content:center;
+    font-family:'Space Grotesk', sans-serif; font-weight:700; color:#0A0E1A; font-size:14px;
+  }
+  .yt-body{ flex:1; min-width:0; }
+  .yt-body h3{ font-size:15.5px; font-weight:600; }
+  .yt-body p{ font-size:13px; color:var(--muted); margin-top:2px; }
+  .yt-lang{
+    font-family:'IBM Plex Mono', monospace;
+    font-size:10.5px; color:var(--gold);
+    border:1px solid rgba(245,185,66,0.3);
+    padding:2px 8px; border-radius:20px; flex:none;
+  }
+  .yt-link{
+    flex:none; font-family:'IBM Plex Mono', monospace; font-size:12px;
+    color:var(--gain); border:1px solid var(--border); padding:7px 12px; border-radius:6px;
+  }
+  .yt-link:hover{ border-color:var(--gain); }
+
+  /* ---- Checklist ---- */
+  .checklist-grid{
+    display:grid;
+    grid-template-columns:1fr 1fr;
+    gap:14px;
+  }
+  @media (max-width:640px){ .checklist-grid{ grid-template-columns:1fr; } }
+  .check-group{
+    background:var(--surface);
+    border:1px solid var(--border);
+    border-radius:10px;
+    padding:18px 20px;
+  }
+  .check-group h4{
+    font-family:'IBM Plex Mono', monospace;
+    font-size:11px; letter-spacing:0.06em; text-transform:uppercase;
+    color:var(--gain); margin-bottom:12px;
+  }
+  .check-item{
+    display:flex; align-items:flex-start; gap:10px;
+    padding:8px 0;
+    border-top:1px solid var(--border);
+    font-size:13.5px;
+  }
+  .check-item:first-of-type{ border-top:none; }
+  .check-item input{ margin-top:3px; accent-color:var(--gain); flex:none; }
+  .check-item label span{ display:block; color:var(--muted); font-size:12px; margin-top:2px; }
+
+  /* ---- Footer ---- */
+  footer{
+    max-width:1040px; margin:0 auto; padding:40px 24px 80px;
+    border-top:1px solid var(--border);
+    color:var(--muted); font-size:13px;
+  }
+  .updated-row{
+    display:flex; justify-content:space-between; align-items:center;
+    flex-wrap:wrap; gap:10px; margin-bottom:18px;
+  }
+  .updated-pill{
+    font-family:'IBM Plex Mono', monospace;
+    font-size:11.5px; color:var(--gain);
+    border:1px solid rgba(45,212,167,0.3);
+    padding:5px 10px; border-radius:20px;
+  }
+  footer .fine{ max-width:70ch; }
+</style>
+</head>
+<body>
+
+  <div class="ticker-wrap" aria-hidden="true">
+    <div class="ticker">
+      <span class="up">NIFTY 50 ▲</span>
+      <span class="down">SENSEX ▼</span>
+      <span>PAPER TRADING = ZERO RISK LEARNING</span>
+      <span class="up">RESEARCH FIRST ▲</span>
+      <span>NO TIP, NO HYPE — ONLY PROCESS</span>
+      <span class="down">FOMO = LOSS ▼</span>
+      <span>CHECK FUNDAMENTALS + TECHNICALS</span>
+      <span class="up">EDUCATION ONLY ▲</span>
+      <span>NIFTY 50 ▲</span>
+      <span class="down">SENSEX ▼</span>
+      <span>PAPER TRADING = ZERO RISK LEARNING</span>
+      <span class="up">RESEARCH FIRST ▲</span>
+      <span>NO TIP, NO HYPE — ONLY PROCESS</span>
+    </div>
+  </div>
+
+  <header>
+    <div class="eyebrow">Learning hub · Not a trading platform</div>
+    <h1>Stock Market <em>Padam.</em><br>Verify before you buy.</h1>
+    <p class="subtitle">
+      Ithu oru <b>education-only</b> resource page — official exchange &amp; broker
+      tools, honest YouTube teachers, and a checklist to run before any buy.
+      Practice everything here on a <b>paper trading</b> account first.
+    </p>
+    <div class="disclaimer-strip">
+      <span>⚠</span>
+      <span><strong>Not investment advice.</strong> Links go to third-party sites for learning purposes.
+      Always cross-check with official SEBI-registered sources before real money trading.</span>
+    </div>
+  </header>
+
+  <!-- ================= OFFICIAL PLATFORMS ================= -->
+  <section id="official">
+    <div class="section-head">
+      <div>
+        <h2>Official &amp; trader-used platforms</h2>
+        <p class="section-desc">Exchanges, regulator, and the tools working traders actually open every day — for prices, filings, and screening.</p>
+      </div>
+      <span class="num">01 / SOURCES</span>
+    </div>
+    <div class="grid">
+
+      <a class="card" href="https://www.nseindia.com" target="_blank" rel="noopener">
+        <div class="card-top"><span class="badge official">Exchange</span></div>
+        <h3>NSE India</h3>
+        <p>Official National Stock Exchange — live prices, company filings, circulars.</p>
+        <div class="go">nseindia.com →</div>
+      </a>
+
+      <a class="card" href="https://www.bseindia.com" target="_blank" rel="noopener">
+        <div class="card-top"><span class="badge official">Exchange</span></div>
+        <h3>BSE India</h3>
+        <p>Bombay Stock Exchange — official corporate announcements &amp; prices.</p>
+        <div class="go">bseindia.com →</div>
+      </a>
+
+      <a class="card" href="https://www.sebi.gov.in" target="_blank" rel="noopener">
+        <div class="card-top"><span class="badge official">Regulator</span></div>
+        <h3>SEBI</h3>
+        <p>Regulator site — investor alerts, verify registered analysts &amp; brokers.</p>
+        <div class="go">sebi.gov.in →</div>
+      </a>
+
+      <a class="card" href="https://zerodha.com/varsity/" target="_blank" rel="noopener">
+        <div class="card-top"><span class="badge">Free course</span></div>
+        <h3>Zerodha Varsity</h3>
+        <p>Free, structured modules — from basics to technical &amp; fundamental analysis.</p>
+        <div class="go">zerodha.com/varsity →</div>
+      </a>
+
+      <a class="card" href="https://www.screener.in" target="_blank" rel="noopener">
+        <div class="card-top"><span class="badge">Screener</span></div>
+        <h3>Screener.in</h3>
+        <p>Fundamental data, ratios, and custom stock screens — the analyst's default tool.</p>
+        <div class="go">screener.in →</div>
+      </a>
+
+      <a class="card" href="https://www.tradingview.com" target="_blank" rel="noopener">
+        <div class="card-top"><span class="badge">Charting</span></div>
+        <h3>TradingView</h3>
+        <p>Charts, indicators, and a built-in paper trading simulator to practice on.</p>
+        <div class="go">tradingview.com →</div>
+      </a>
+
+      <a class="card" href="https://www.tickertape.in" target="_blank" rel="noopener">
+        <div class="card-top"><span class="badge">Screener</span></div>
+        <h3>Tickertape</h3>
+        <p>Clean stock pages — scorecards for valuation, growth, profitability, and risk.</p>
+        <div class="go">tickertape.in →</div>
+      </a>
+
+      <a class="card" href="https://www.moneycontrol.com" target="_blank" rel="noopener">
+        <div class="card-top"><span class="badge">News + Data</span></div>
+        <h3>Moneycontrol</h3>
+        <p>News, results calendar, financials — widely used by Indian retail traders.</p>
+        <div class="go">moneycontrol.com →</div>
+      </a>
+
+    </div>
+  </section>
+
+  <!-- ================= YOUTUBE ================= -->
+  <section id="learn">
+    <div class="section-head">
+      <div>
+        <h2>Learn from YouTube — clear, not hype</h2>
+        <p class="section-desc">Channels that explain reasoning openly instead of just dropping buy/sell calls. Watch a few videos from each and see whose teaching style clicks for you.</p>
+      </div>
+      <span class="num">02 / TEACHERS</span>
+    </div>
+    <div class="yt-list">
+
+      <div class="yt-row">
+        <div class="yt-mark">SM</div>
+        <div class="yt-body">
+          <h3>Share Market Tamil Channel</h3>
+          <p>Vijayan Ravichandran (NSE-certified derivatives analyst) — beginner-focused strategy &amp; chart breakdowns.</p>
+        </div>
+        <span class="yt-lang">Tamil</span>
+        <a class="yt-link" href="https://www.youtube.com/channel/UCwAcJt33plDDikuhJjiKzGQ" target="_blank" rel="noopener">Open ↗</a>
+      </div>
+
+      <div class="yt-row">
+        <div class="yt-mark">MP</div>
+        <div class="yt-body">
+          <h3>Money Pechu</h3>
+          <p>Anand Srinivasan — economy, markets &amp; investing explained in plain Tamil, minimal jargon.</p>
+        </div>
+        <span class="yt-lang">Tamil</span>
+        <a class="yt-link" href="https://www.youtube.com/c/MoneyPechu" target="_blank" rel="noopener">Open ↗</a>
+      </div>
+
+      <div class="yt-row">
+        <div class="yt-mark">JPA</div>
+        <div class="yt-body">
+          <h3>JPA Tamil Share Market Education</h3>
+          <p>Intraday-trader-run channel, walks through personal learnings and reasoning step by step.</p>
+        </div>
+        <span class="yt-lang">Tamil</span>
+        <a class="yt-link" href="https://www.youtube.com/channel/UCSp8BzALPEPUyB6ZxpG6i6A" target="_blank" rel="noopener">Open ↗</a>
+      </div>
+
+      <div class="yt-row">
+        <div class="yt-mark">RR</div>
+        <div class="yt-body">
+          <h3>CA Rachana Ranade</h3>
+          <p>Chartered accountant — structured fundamentals-to-technicals courses, known for going deep without selling tips.</p>
+        </div>
+        <span class="yt-lang">Hindi/Eng</span>
+        <a class="yt-link" href="https://www.youtube.com/results?search_query=CA+Rachana+Ranade" target="_blank" rel="noopener">Search ↗</a>
+      </div>
+
+      <div class="yt-row">
+        <div class="yt-mark">PK</div>
+        <div class="yt-body">
+          <h3>Pranjal Kamra (Finology)</h3>
+          <p>Value-investing style breakdowns — explains the "why" behind a stock, not just the "what to buy."</p>
+        </div>
+        <span class="yt-lang">Hindi/Eng</span>
+        <a class="yt-link" href="https://www.youtube.com/results?search_query=Pranjal+Kamra+Finology" target="_blank" rel="noopener">Search ↗</a>
+      </div>
+
+    </div>
+    <p class="section-desc" style="margin-top:16px;">
+      Tip: A good teacher shows their <b style="color:var(--text)">reasoning and data source</b> on screen.
+      Be cautious of anyone promising guaranteed returns or a "sure-shot" tip — that's a hype signal, not education.
+    </p>
+  </section>
+
+  <!-- ================= CHECKLIST ================= -->
+  <section id="checklist">
+    <div class="section-head">
+      <div>
+        <h2>Before you buy any stock</h2>
+        <p class="section-desc">Run through this every single time — on paper trades too. Building the habit now is the whole point.</p>
+      </div>
+      <span class="num">03 / CHECKLIST</span>
+    </div>
+
+    <div class="checklist-grid">
+      <div class="check-group">
+        <h4>Fundamentals</h4>
+        <div class="check-item"><input type="checkbox" id="c1"><label for="c1">Revenue &amp; profit growth trend<span>Check last 8 quarters, not just one good quarter</span></label></div>
+        <div class="check-item"><input type="checkbox" id="c2"><label for="c2">Debt-to-equity ratio<span>High debt = high risk, especially in rate-hike periods</span></label></div>
+        <div class="check-item"><input type="checkbox" id="c3"><label for="c3">P/E vs sector peers<span>Cheap for a reason, or genuinely undervalued?</span></label></div>
+        <div class="check-item"><input type="checkbox" id="c4"><label for="c4">Promoter holding &amp; pledging<span>Falling promoter stake or high pledge = red flag</span></label></div>
+      </div>
+
+      <div class="check-group">
+        <h4>Technicals</h4>
+        <div class="check-item"><input type="checkbox" id="c5"><label for="c5">Trend vs 50 &amp; 200-day average<span>Price above both = broader uptrend structure</span></label></div>
+        <div class="check-item"><input type="checkbox" id="c6"><label for="c6">Volume confirms the move<span>Breakouts without volume often fail</span></label></div>
+        <div class="check-item"><input type="checkbox" id="c7"><label for="c7">Support &amp; resistance levels<span>Know your exit before you enter</span></label></div>
+        <div class="check-item"><input type="checkbox" id="c8"><label for="c8">RSI not deeply overbought<span>Avoid chasing a stock right after a spike</span></label></div>
+      </div>
+
+      <div class="check-group">
+        <h4>Risk management</h4>
+        <div class="check-item"><input type="checkbox" id="c9"><label for="c9">Position size decided<span>Never one stock = large % of capital</span></label></div>
+        <div class="check-item"><input type="checkbox" id="c10"><label for="c10">Stop-loss level set<span>Decide the exit before, not during, panic</span></label></div>
+        <div class="check-item"><input type="checkbox" id="c11"><label for="c11">Not buying on a tip or rumour<span>If it's "hot news," it's already priced in</span></label></div>
+      </div>
+
+      <div class="check-group">
+        <h4>News &amp; sanity check</h4>
+        <div class="check-item"><input type="checkbox" id="c12"><label for="c12">Recent company announcements read<span>Check NSE/BSE filings directly, not just headlines</span></label></div>
+        <div class="check-item"><input type="checkbox" id="c13"><label for="c13">Upcoming earnings date checked<span>Avoid surprises right before results</span></label></div>
+        <div class="check-item"><input type="checkbox" id="c14"><label for="c14">Would I still buy without the hype?<span>The single best filter against FOMO</span></label></div>
+      </div>
+    </div>
+  </section>
+
+  <footer>
+    <div class="updated-row">
+      <span id="last-reviewed" class="updated-pill mono">● Last reviewed: --</span>
+      <span>Refresh this page's links periodically — channels &amp; tools change over time.</span>
+    </div>
+    <p class="fine">
+      This page is built for education and paper-trading practice only. It is not investment advice
+      and Anthropic/Claude has no affiliation with the linked platforms or creators. Always verify
+      any analyst or advisor's SEBI registration before acting on their content, and never risk real
+      capital until you're consistently comfortable on paper.
+    </p>
+  </footer>
+
+  <script>
+    const reviewEl = document.getElementById('last-reviewed');
+    if (reviewEl) {
+      const formattedDate = new Intl.DateTimeFormat('en-GB', {
+        day: '2-digit',
+        month: 'short',
+        year: 'numeric'
+      }).format(new Date());
+      reviewEl.textContent = `● Last reviewed: ${formattedDate}`;
+    }
+  </script>
+
+</body>
+</html>
